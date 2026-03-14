@@ -12,10 +12,23 @@ class FlutterTripsApp extends StatelessWidget {
     return MaterialApp(
       title: 'FlutterTrips',
       debugShowCheckedModeBanner: false,
+
+      // ── Passo 2: ThemeData com a cor oficial da marca ──────────────
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
       ),
+
+      // ── Desafio Extra: Dark Mode dinâmico do sistema ───────────────
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepOrange,
+          brightness: Brightness.dark,
+        ),
+      ),
+      themeMode: ThemeMode.system, // respeita a preferência do SO
+
       home: const HomeScreen(),
     );
   }
@@ -27,15 +40,16 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 1,
-        title: const Text(
+        title: Text(
           '✈️ FlutterTrips',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 22,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: false,
@@ -49,9 +63,11 @@ class HomeScreen extends StatelessWidget {
             rating: 4.8,
             reviewCount: 2340,
             description:
-                'Uma ilha vulcânica no Mar Egeu, conhecida por suas vistas deslumbrantes, casinhas brancas com cúpulas azuis e pores do sol inesquecíveis. Um destino romântico imperdível.',
-            imageUrl:
-                'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=800&q=80',
+                'Uma ilha vulcânica no Mar Egeu, conhecida por suas vistas deslumbrantes, '
+                'casinhas brancas com cúpulas azuis e pores do sol inesquecíveis. '
+                'Um destino romântico imperdível.',
+            // ── Passo 1: usar imagem local ──────────────────────────
+            imageAsset: 'assets/images/santorini.jpg',
           ),
           TravelCard(
             cityName: 'Kyoto',
@@ -59,9 +75,9 @@ class HomeScreen extends StatelessWidget {
             rating: 4.9,
             reviewCount: 5120,
             description:
-                'Antiga capital imperial do Japão, repleta de templos budistas, jardins zen, geishas tradicionais e a magia das cerejeiras em flor durante a primavera.',
-            imageUrl:
-                'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=800&q=80',
+                'Antiga capital imperial do Japão, repleta de templos budistas, jardins zen, '
+                'geishas tradicionais e a magia das cerejeiras em flor durante a primavera.',
+            imageAsset: 'assets/images/kyoto.jpg',
           ),
           TravelCard(
             cityName: 'Machu Picchu',
@@ -69,9 +85,9 @@ class HomeScreen extends StatelessWidget {
             rating: 4.7,
             reviewCount: 3890,
             description:
-                'A cidade perdida dos Incas, situada no alto dos Andes. Uma das maravilhas do mundo moderno, cercada por montanhas envoltas em névoa e história milenar.',
-            imageUrl:
-                'https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=800&q=80',
+                'A cidade perdida dos Incas, situada no alto dos Andes. Uma das maravilhas '
+                'do mundo moderno, cercada por montanhas envoltas em névoa e história milenar.',
+            imageAsset: 'assets/images/machu_picchu.jpg',
           ),
         ],
       ),
@@ -82,13 +98,15 @@ class HomeScreen extends StatelessWidget {
 // =============================================================
 //  TRAVEL CARD — Widget Principal
 // =============================================================
+
+// ── Passo 3: já convertido para StatefulWidget ────────────────
 class TravelCard extends StatefulWidget {
   final String cityName;
   final String countryName;
   final double rating;
   final int reviewCount;
   final String description;
-  final String imageUrl;
+  final String imageAsset; // ← Passo 1: caminho do asset local
 
   const TravelCard({
     super.key,
@@ -97,7 +115,7 @@ class TravelCard extends StatefulWidget {
     required this.rating,
     required this.reviewCount,
     required this.description,
-    required this.imageUrl,
+    required this.imageAsset,
   });
 
   @override
@@ -105,20 +123,19 @@ class TravelCard extends StatefulWidget {
 }
 
 class _TravelCardState extends State<TravelCard> {
+  // ── Passo 4: estado do favorito ───────────────────────────────
   bool _isFavorited = false;
 
-  // ----------------------------------------------------------
-  //  PASSO 4: LayoutBuilder — cérebro da responsividade
-  // ----------------------------------------------------------
+  // ── Passo 5: estado do "Já Visitei" ──────────────────────────
+  bool _jaVisitou = false;
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 500) {
-          // TELA ESTREITA: layout vertical (mobile)
           return _buildMobileLayout();
         } else {
-          // TELA LARGA: layout horizontal (tablet / web)
           return _buildTabletLayout();
         }
       },
@@ -126,98 +143,104 @@ class _TravelCardState extends State<TravelCard> {
   }
 
   // ----------------------------------------------------------
-  //  PASSO 2 + 3: Container com sombra + Stack em camadas
+  //  Layout Mobile — Stack vertical
   // ----------------------------------------------------------
   Widget _buildMobileLayout() {
     return Container(
-      height: 240,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      // PASSO 2: BoxDecoration com BorderRadius e BoxShadow
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
             color: Colors.black26,
             blurRadius: 10,
-            offset: Offset(0, 4), // sombra vinda de cima
+            offset: Offset(0, 4),
           ),
         ],
       ),
-      // PASSO 3: ClipRRect garante que a imagem respeite o arredondamento
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          fit: StackFit.expand,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // CAMADA 1: Imagem de fundo
-            Image.network(
-              widget.imageUrl,
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, progress) {
-                if (progress == null) return child;
-                return Container(
-                  color: Colors.grey[200],
-                  child: const Center(child: CircularProgressIndicator()),
-                );
-              },
-            ),
-
-            // CAMADA 2: Gradiente + textos na parte inferior
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      Colors.black87,
-                      Colors.transparent,
-                    ],
+            // ── Imagem + overlay ──────────────────────────────
+            SizedBox(
+              height: 200,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // ── Passo 1: Image.asset ──────────────────
+                  Image.asset(
+                    widget.imageAsset,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey[300],
+                      child: const Center(
+                        child: Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                      ),
+                    ),
                   ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Nome da cidade
-                    Text(
-                      widget.cityName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+
+                  // Gradiente + textos
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [Colors.black87, Colors.transparent],
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // ── Passo 2: texto com Theme.of(context) ──
+                          Text(
+                            widget.cityName,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge!
+                                .copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.countryName,
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 13),
+                          ),
+                          const SizedBox(height: 6),
+                          _buildRatingRow(starColor: Colors.amber),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    // Nome do país
-                    Text(
-                      widget.countryName,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
-                      ),
+                  ),
+
+                  // ── Passo 4: botão favorito ───────────────
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: _buildFavoriteButton(
+                      iconColor: _isFavorited ? Colors.red : Colors.white,
+                      bgColor: Colors.black38,
                     ),
-                    const SizedBox(height: 6),
-                    // Row com avaliação em estrelas
-                    _buildRatingRow(starColor: Colors.amber),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
 
-            // CAMADA 3: Botão de favorito no topo direito
-            Positioned(
-              top: 10,
-              right: 10,
-              child: _buildFavoriteButton(
-                iconColor: _isFavorited ? Colors.red : Colors.white,
-                bgColor: Colors.black38,
-              ),
+            // ── Passo 5: Switch "Já visitei" no mobile ────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: _buildVisitedRow(),
             ),
           ],
         ),
@@ -226,14 +249,14 @@ class _TravelCardState extends State<TravelCard> {
   }
 
   // ----------------------------------------------------------
-  //  PASSO 4: Layout Horizontal (Tablet / Web)
+  //  Layout Tablet — Row horizontal
   // ----------------------------------------------------------
   Widget _buildTabletLayout() {
     return Container(
-      height: 200,
+      height: 220,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
@@ -253,18 +276,18 @@ class _TravelCardState extends State<TravelCard> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    widget.imageUrl,
+                  // ── Passo 1: Image.asset ──────────────────
+                  Image.asset(
+                    widget.imageAsset,
                     fit: BoxFit.cover,
-                    loadingBuilder: (context, child, progress) {
-                      if (progress == null) return child;
-                      return Container(
-                        color: Colors.grey[200],
-                        child: const Center(child: CircularProgressIndicator()),
-                      );
-                    },
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey[300],
+                      child: const Center(
+                        child: Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                      ),
+                    ),
                   ),
-                  // Botão de favorito sobre a imagem
+                  // ── Passo 4: botão favorito ───────────────
                   Positioned(
                     top: 10,
                     right: 10,
@@ -277,57 +300,64 @@ class _TravelCardState extends State<TravelCard> {
               ),
             ),
 
-            // DIREITA: Informações de texto (flex 3)
+            // DIREITA: Textos (flex 3)
             Expanded(
               flex: 3,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Nome da cidade
+                    // ── Passo 2: texto com Theme.of(context) ──
                     Text(
                       widget.cityName,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineSmall!
+                          .copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const SizedBox(height: 2),
-                    // País com ícone
                     Row(
                       children: [
-                        const Icon(Icons.location_on,
-                            size: 14, color: Colors.grey),
+                        Icon(Icons.location_on,
+                            size: 14,
+                            color: Theme.of(context).colorScheme.secondary),
                         const SizedBox(width: 2),
                         Text(
                           widget.countryName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: Colors.grey,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    // Avaliação
                     _buildRatingRow(starColor: Colors.amber, darkText: true),
-                    const SizedBox(height: 10),
-                    // DESAFIO EXTRA: Descrição com Expanded + ellipsis
+                    const SizedBox(height: 8),
+                    // Descrição com ellipsis
                     Expanded(
                       child: Text(
                         widget.description,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: Colors.black54,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.6),
                           height: 1.4,
                         ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis, // trunca com "..."
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    // ── Passo 5: Switch "Já visitei" ─────────
+                    _buildVisitedRow(),
                   ],
                 ),
               ),
@@ -342,15 +372,41 @@ class _TravelCardState extends State<TravelCard> {
   //  Widgets auxiliares reutilizáveis
   // ----------------------------------------------------------
 
+  /// Passo 5: Row com Switch.adaptive para "Já visitei"
+  Widget _buildVisitedRow() {
+    return Row(
+      children: [
+        Text(
+          'Já visitei este destino',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const Spacer(),
+        Switch.adaptive(
+          value: _jaVisitou,
+          activeColor: Theme.of(context).colorScheme.primary,
+          // ── Passo 5: setState para atualizar o estado ─────
+          onChanged: (bool novoValor) {
+            setState(() {
+              _jaVisitou = novoValor;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
   /// Row com estrelas e contagem de avaliações
   Widget _buildRatingRow({required Color starColor, bool darkText = false}) {
-    final textColor = darkText ? Colors.black87 : Colors.white;
-    final subColor = darkText ? Colors.grey : Colors.white70;
+    final textColor = darkText
+        ? Theme.of(context).colorScheme.onSurface
+        : Colors.white;
+    final subColor = darkText
+        ? Theme.of(context).colorScheme.onSurfaceVariant
+        : Colors.white70;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Estrelas dinâmicas baseadas na nota
         ...List.generate(5, (i) {
           final full = i < widget.rating.floor();
           final half = !full && i < widget.rating;
@@ -368,10 +424,9 @@ class _TravelCardState extends State<TravelCard> {
         Text(
           widget.rating.toStringAsFixed(1),
           style: TextStyle(
-            color: textColor,
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-          ),
+              color: textColor,
+              fontSize: 13,
+              fontWeight: FontWeight.bold),
         ),
         const SizedBox(width: 4),
         Text(
@@ -382,7 +437,7 @@ class _TravelCardState extends State<TravelCard> {
     );
   }
 
-  /// Botão de favorito com toggle de estado
+  /// Passo 4: Botão de favorito com toggle de estado
   Widget _buildFavoriteButton({
     required Color iconColor,
     required Color bgColor,
@@ -392,10 +447,7 @@ class _TravelCardState extends State<TravelCard> {
       child: Container(
         width: 36,
         height: 36,
-        decoration: BoxDecoration(
-          color: bgColor,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
         child: Icon(
           _isFavorited ? Icons.favorite : Icons.favorite_border,
           color: iconColor,
